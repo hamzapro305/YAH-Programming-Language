@@ -31,20 +31,38 @@ class Parser:
         if not is_main:  # If 'main' function is not found
             raise SyntaxError("No Main Function detected")  # Raise a syntax error
     
-    # Method to detect functions in the list of tokens
+    # Method to detect functions in the list of tokens, ensuring unique function names
     def detect_funcs(self, tokens):
         funcs = []  # List to hold detected functions
+        func_names = set()  # Set to track unique function names
+        
         # Loop through the tokens to find function declarations
         for i, token in enumerate(tokens):
             if (
                 token['type'] == "KEYWORD"  # If the token is a keyword
                 and token['value'] == "function"  # and it's 'function'
             ):
+                func_name = tokens[i + 1]['value']  # Get the function name
+                
+                if func_name in func_names:
+                    # If function name is already in the set, raise a SyntaxError
+                    raise SyntaxError(
+                        {
+                            "message": f"Duplicate function name '{func_name}' detected.",
+                            "token": token,
+                        }
+                    )
+                
+                # Otherwise, add the function to the list and the name to the set
                 funcs.append({
                     'loc': i,  # Store the location in the token list
-                    'name': tokens[i + 1]['value'],  # Store the function name
+                    'name': func_name,  # Store the function name
                 })
+                
+                func_names.add(func_name)  # Add to the set of function names
+        
         return funcs  # Return the list of detected functions
+
 
     # Method to get the current token in the list
     def current_token(self):
@@ -277,7 +295,7 @@ class Parser:
     def parse_if_statement(self):
         self.expect('KEYWORD', 'if')  # Expect 'if' keyword
         self.expect('PUNCTUATION', '(')  # Opening parenthesis for the condition
-        self.parse_expression()  # Parse the 'if' condition
+        self.parse_logical_expression()  # Parse the 'if' condition
         self.expect('PUNCTUATION', ')')  # Closing parenthesis
 
         # Parse the 'if' block statements
