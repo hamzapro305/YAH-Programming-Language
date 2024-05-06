@@ -54,6 +54,10 @@ class Parser:
     def advance(self):
         self.current_pos += 1  # Increment the current position
 
+    # Method to fallback to the prev token in the list
+    def fallback(self):
+        self.current_pos -= 1  # decrement the current position
+
     # Method to move the cursor to a specific location in the token list
     def move_cursor(self, loc):
         self.current_pos = loc  # Set the current position
@@ -125,6 +129,41 @@ class Parser:
                 self.advance()  # Move to the next parameter
             else:
                 raise SyntaxError("Unexpected parameter syntax")  # Raise error for invalid parameter
+    
+    # Method to parse function arguments (comma-separated identifiers, numbers, strings)
+    def parse_arguments(self):
+        # Continue parsing until the closing parenthesis or unexpected token
+        while True:
+            token = self.current_token()  # Get the current token
+            
+            # Determine valid expression types for function arguments
+            if token['type'] in {'IDENTIFIER', 'NUMBER', 'STRING'}:
+                self.advance()  # Move past the valid argument token
+                
+                # Check for the end of the argument list
+                if self.current_token()['type'] == 'PUNCTUATION' and self.current_token()['value'] == ')':
+                    break  # End of the argument list
+                
+                # If there's a comma, it indicates more arguments to parse
+                if self.current_token()['type'] == 'PUNCTUATION' and self.current_token()['value'] == ',':
+                    self.advance()  # Move past the comma to the next argument
+                else:
+                    # If it's not a comma or closing parenthesis, raise a SyntaxError
+                    raise SyntaxError(
+                        {
+                            "message": f"Unexpected token in function arguments. Expected ',' or ')', got '{self.current_token()['value']}'",
+                            "token": self.current_token(),
+                        }
+                    )
+            else:
+                # If an unexpected token is encountered, raise a SyntaxError
+                raise SyntaxError(
+                    {
+                        "message": f"Unexpected token in function arguments. Expected 'IDENTIFIER', 'NUMBER', or 'STRING', got '{token['value']}'",
+                        "token": token,
+                    }
+                )
+
 
     # Method to parse statements within the function body
     def parse_statements(self):
@@ -183,7 +222,7 @@ class Parser:
 
     # Method to parse a variable assignment or function call
     def parse_assignment_or_function_call(self):
-        identifier = self.expect('IDENTIFIER')  # Get the variable/function name
+        self.expect('IDENTIFIER')  # Get the variable/function name
 
         if self.current_token()['value'] == '(':
             self.parse_function_call()  # If it's a function call
@@ -198,7 +237,9 @@ class Parser:
     # Method to parse a function call with a list of expressions
     def parse_function_call(self):
         self.expect('PUNCTUATION', '(')  # Opening parenthesis
-        self.parse_expression_list()  # Parse function call parameters
+        # Check if there are parameters
+        if self.current_token()['type'] == 'IDENTIFIER' or self.current_token()['type'] == 'NUMBER' or self.current_token()['type'] == 'STRING':
+            self.parse_arguments()  # Parse the function parameters
         self.expect('PUNCTUATION', ')')  # Closing parenthesis
         self.expect('PUNCTUATION', ';')  # Semicolon at the end of function call
 
