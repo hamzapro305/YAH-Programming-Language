@@ -11,7 +11,7 @@ TOKEN_TYPES = {
 }
 
 # Keywords and operators specific to your language
-KEYWORDS = {'if', 'else', 'while', 'for', 'function', 'return', 'yah'}
+KEYWORDS = {'if', 'else', 'while', 'for', 'function', 'return', 'MANLO'}
 OPERATORS = {'+', '-', '*', '/', '=', '==', '!=', '>', '<', '>=', '<='}
 ARITHEMATIC_OPERATOR = {'+', '-', '*', '/'}
 LOGICAL_OPERATOR = {'==', '!=', '>', '<', '>=', '<='}

@@ -141,7 +141,7 @@ class Parser:
                     self.parse_while_statement()  # Parse 'while' statement
                 elif current_token['value'] == 'for':
                     self.parse_for_statement()  # Parse 'for' statement
-                elif current_token['value'] == 'yah':
+                elif current_token['value'] == 'MANLO':
                     self.parse_assignment(True)  # Parse Declaration statement
                 else:
                     raise SyntaxError(f"Unexpected keyword '{current_token['value']}'")  # Invalid keyword
@@ -224,7 +224,7 @@ class Parser:
     def parse_assignment(self, is_declaration=False):
         if is_declaration: 
             try: 
-                self.expect('KEYWORD', 'yah')
+                self.expect('KEYWORD', 'MANLO')
             except SyntaxError as e:
                 raise SyntaxError("Invalid Declaration")
         self.expect('IDENTIFIER')

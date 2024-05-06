@@ -1,9 +1,5 @@
-
 function main() {
-    yah y = 1;
-    y = y + 1;
-    add();
-    for(yah x = 1; x < 10; x = x + 1;) {
-        
+    for(MANLO x = 1; x < 10; x = x + 1;) {
+        MANLO y = y + 1;
     }
 }
