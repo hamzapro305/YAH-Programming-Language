@@ -1,0 +1,14 @@
+function add1(a, b) {
+    a = a + b;
+    add(1, 5, 6);
+    return a + b - c + 123;
+}
+function main() {
+    add1(1, "akjsdhoiuh");
+    add2(3, 1);
+}
+function add2(a, b) {
+    a = a + b;
+    add(1, 5, 6);
+    return a + b - c + 123;
+}
