@@ -1,14 +1,9 @@
-function add1(a, b) {
-    a = a + b;
-    add(1, 5, 6);
-    return a + b - c + 123;
-}
+
 function main() {
-    add1(1, "akjsdhoiuh");
-    add2(3, 1);
-}
-function add2(a, b) {
-    a = a + b;
-    add(1, 5, 6);
-    return a + b - c + 123;
+    yah y = 1;
+    y = y + 1;
+    add();
+    for(yah x = 1; x < 10; x = x + 1;) {
+        
+    }
 }

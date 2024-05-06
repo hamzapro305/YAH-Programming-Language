@@ -11,6 +11,10 @@ if(len(sys.argv) > 1):
     lexer = Lexer(text)
     tokens = lexer.tokenize()
 
+    for i, token in enumerate(tokens):
+        pass
+        # print(f"{token['type']} {token['value']}")
+
     # Parse the tokens to check syntax validity
     p = parser(tokens)
     try:

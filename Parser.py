@@ -1,3 +1,5 @@
+from globals import LOGICAL_OPERATOR
+
 # Define a custom exception for syntax errors
 class SyntaxError(Exception):
     """Custom exception for syntax errors."""
@@ -66,9 +68,27 @@ class Parser:
             self.advance()  # Advance to the next token
             return token  # Return the current token
         raise SyntaxError(  # Raise an error if the token doesn't match
-            f"Expected {token_type} " +
-            (f"'{expected_value}'" if expected_value else ""),
-            token,
+            {
+                "message": f"Expected {token_type} " + (f"'{expected_value}'" if expected_value else ""),
+                "token": token
+            }
+        )
+
+    # Method to check if the current token matches an expected type and one of the expected values
+    def expect_multiple_values(self, token_type, expected_values):
+        token = self.current_token()  # Get the current token
+
+        # Check if the token type matches and the value is one of the expected values
+        if token['type'] == token_type and token['value'] in expected_values:
+            self.advance()  # Advance to the next token
+            return token  # Return the current token
+
+        # If no match, raise a SyntaxError with a detailed message and the current token
+        raise SyntaxError(
+            {
+                "message": f"Expected {token_type} with one of values {expected_values}, got '{token['value']}'",
+                "token": token,
+            }
         )
 
     # Main parsing method to validate the syntax of the code
@@ -121,6 +141,8 @@ class Parser:
                     self.parse_while_statement()  # Parse 'while' statement
                 elif current_token['value'] == 'for':
                     self.parse_for_statement()  # Parse 'for' statement
+                elif current_token['value'] == 'yah':
+                    self.parse_assignment(True)  # Parse Declaration statement
                 else:
                     raise SyntaxError(f"Unexpected keyword '{current_token['value']}'")  # Invalid keyword
             elif current_token['type'] == 'IDENTIFIER':  # Handle identifier-based statements
@@ -137,13 +159,13 @@ class Parser:
     # Method to parse an expression, which could include operations or function calls
     def parse_expression(self):
         if self.current_token()['type'] in {'IDENTIFIER', 'NUMBER'}:
-            self.advance()  # Move past the identifier or number
+            self.advance() # Move past the identifier or number
             # Handle operations in expressions
             while (
                 self.current_token()['type'] == 'OPERATOR'
                 and self.current_token()['value'] in {'+', '-', '*', '/'}
             ):
-                self.advance()  # Move past the operator
+                self.advance() # Move past the operator
                 # Expect another identifier or number after operator
                 if self.current_token()['type'] not in {'IDENTIFIER', 'NUMBER'}:
                     raise SyntaxError("Expected identifier or number after operator")
@@ -151,8 +173,13 @@ class Parser:
 
         elif self.current_token()['type'] == 'STRING':
             self.advance()  # Handle strings in expressions
+        elif self.current_token()['type'] == 'PUNCTUATION':
+            self.advance()  # Handle strings in expressions
         else:
-            raise SyntaxError("Unexpected expression syntax")  # Raise error for invalid expression
+            raise SyntaxError({
+                "message": "Unexpected expression syntax",
+                "token": self.current_token()
+            })  # Raise error for invalid expression
 
     # Method to parse a variable assignment or function call
     def parse_assignment_or_function_call(self):
@@ -161,7 +188,10 @@ class Parser:
         if self.current_token()['value'] == '(':
             self.parse_function_call()  # If it's a function call
         elif self.current_token()['value'] == '=':
-            self.parse_assignment()  # If it's a variable assignment
+            # If it's a variable assignment
+            self.expect('OPERATOR', '=')  # Expect assignment operator '='
+            self.parse_expression()  # Parse the value being assigned
+            self.expect('PUNCTUATION', ';')  # Expect semicolon at the end of the assignment
         else:
             raise SyntaxError("Expected '(' or '=' after identifier")  # Invalid syntax
 
@@ -191,7 +221,13 @@ class Parser:
                 raise SyntaxError("Unexpected expression list syntax")  # Invalid expression list
 
     # Method to parse a variable assignment
-    def parse_assignment(self):
+    def parse_assignment(self, is_declaration=False):
+        if is_declaration: 
+            try: 
+                self.expect('KEYWORD', 'yah')
+            except SyntaxError as e:
+                raise SyntaxError("Invalid Declaration")
+        self.expect('IDENTIFIER')
         self.expect('OPERATOR', '=')  # Expect assignment operator '='
         self.parse_expression()  # Parse the value being assigned
         self.expect('PUNCTUATION', ';')  # Expect semicolon at the end of the assignment
@@ -222,7 +258,7 @@ class Parser:
     def parse_while_statement(self):
         self.expect('KEYWORD', 'while')  # Expect 'while' keyword
         self.expect('PUNCTUATION', '(')  # Opening parenthesis for the condition
-        self.parse_expression()  # Parse the loop condition
+        self.parse_logical_expression()  # Parse the loop condition
         self.expect('PUNCTUATION', ')')  # Closing parenthesis
 
         # Parse the statements within the 'while' block
@@ -230,19 +266,32 @@ class Parser:
         self.parse_statements()  # Parse statements within the 'while' block
         self.expect('PUNCTUATION', '}')  # Closing curly brace
 
+    def parse_logical_expression(self):
+        if self.current_token()['type'] not in {'IDENTIFIER', 'NUMBER'}:
+            raise SyntaxError("Unexpected keyword")
+        else:
+            self.advance()
+        self.expect_multiple_values("OPERATOR", LOGICAL_OPERATOR)
+        if self.current_token()['type'] not in {'IDENTIFIER', 'NUMBER'}:
+            raise SyntaxError("Unexpected keyword")
+        else:
+            self.advance()
+        self.expect("PUNCTUATION", ";")
+
+
     # Method to parse a simple 'for' loop
     def parse_for_statement(self):
         self.expect('KEYWORD', 'for')  # Expect 'for' keyword
         self.expect('PUNCTUATION', '(')  # Opening parenthesis
 
         # Parse the initialization expression in the 'for' loop
-        self.parse_assignment_or_function_call()  # e.g., variable initialization or assignment
+        self.parse_assignment(True)  # e.g., variable initialization or assignment
 
         # Parse the loop condition
-        self.parse_expression()
+        self.parse_logical_expression()
 
         # Parse the increment/decrement operation in the 'for' loop
-        self.parse_expression()
+        self.parse_assignment()
 
         self.expect('PUNCTUATION', ')')  # Closing parenthesis
 
